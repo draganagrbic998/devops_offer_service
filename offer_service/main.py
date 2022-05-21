@@ -52,6 +52,24 @@ def create_offer(offer: Offer):
                            (offer.position, offer.requirements, offer.description, offer.agent_application_link))
 
 
+def search_query(search: str):
+    return 'lower(position) like %s or lower(requirements) like %s or lower(description) like %s', (f'%{search.lower()}%', f'%{search.lower()}%', f'%{search.lower()}%')
+
+
+@app.get(OFFERS_URL)
+def read_offers(search: str = Query(''), offset: int = Query(0), limit: int = Query(7)):
+    query, params = search_query(search)
+    with db.connect() as connection:
+        total_offers = len(list(connection.execute(f'select * from offers where {query}', params)))
+        offers = connection.execute(f'select * from offers where {query} order by date desc offset {offset} limit {limit}', params)
+
+    prev_link = f'/offers?search={search}&offset={offset-limit}&limit={limit}' if offset - limit >= 0 else None
+    next_link = f'/offers?search={search}&offset={offset+limit}&limit={limit}' if offset + limit < total_offers else None
+    links = NavigationLinks(prev=prev_link, next=next_link)
+    results = [Offer.parse_obj(offer) for offer in offers]
+
+    return Response(results=results, links=links, offset=offset, limit=limit, size=len(results))
+
 
 def run_service():
     uvicorn.run(app, host='0.0.0.0', port=8002)

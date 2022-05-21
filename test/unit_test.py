@@ -228,3 +228,135 @@ def test_create_offer_valid():
             values (current_timestamp, %s, %s, %s, %s)
         '''.split()), ('position 1', 'requirements 1', 'description 1', 'agent_application_link 1'))
 
+@patch('offer_service.main.db', testDB)
+def test_read_offers():
+    with patch.object(testDB, 'execute', wraps=testDB.execute) as spy:        
+        res = client.get(OFFERS_URL)
+        assert res.status_code == 200
+        body = json.loads(res.text)
+        assert body['links']['prev'] is None
+        assert body['links']['next'] is None
+        assert body['offset'] == 0
+        assert body['limit'] == 7
+        assert body['size'] == 0
+        assert len(body['results']) == 0
+        spy.assert_called()
+        spy.assert_called_with(' '.join('''
+            select * from offers
+            where lower(position) like %s or lower(requirements) like %s or lower(description) like %s
+            order by date desc offset 0 limit 7
+        '''.split()), ('%%', '%%', '%%'))
+
+@patch('offer_service.main.db', testDB)
+def test_read_offers_with_offset():
+    with patch.object(testDB, 'execute', wraps=testDB.execute) as spy:        
+        res = client.get(f'{OFFERS_URL}?offset=7')
+        assert res.status_code == 200
+        body = json.loads(res.text)
+        assert body['links']['prev'] == '/offers?search=&offset=0&limit=7'
+        assert body['links']['next'] is None
+        assert body['offset'] == 7
+        assert body['limit'] == 7
+        assert body['size'] == 0
+        assert len(body['results']) == 0
+        spy.assert_called()
+        spy.assert_called_with(' '.join('''
+            select * from offers
+            where lower(position) like %s or lower(requirements) like %s or lower(description) like %s
+            order by date desc offset 7 limit 7
+        '''.split()), ('%%', '%%', '%%'))
+
+@patch('offer_service.main.db', testDB)
+def test_read_offers_with_limit():
+    with patch.object(testDB, 'execute', wraps=testDB.execute) as spy:        
+        res = client.get(f'{OFFERS_URL}?limit=10')
+        assert res.status_code == 200
+        body = json.loads(res.text)
+        assert body['links']['prev'] is None
+        assert body['links']['next'] is None
+        assert body['offset'] == 0
+        assert body['limit'] == 10
+        assert body['size'] == 0
+        assert len(body['results']) == 0
+        spy.assert_called()
+        spy.assert_called_with(' '.join('''
+            select * from offers
+            where lower(position) like %s or lower(requirements) like %s or lower(description) like %s
+            order by date desc offset 0 limit 10
+        '''.split()), ('%%', '%%', '%%'))
+
+@patch('offer_service.main.db', testDB)
+def test_search_offers_by_position():
+    with patch.object(testDB, 'execute', wraps=testDB.execute) as spy:        
+        res = client.get(f'{OFFERS_URL}?search=POSITION')
+        assert res.status_code == 200
+        body = json.loads(res.text)
+        assert body['links']['prev'] is None
+        assert body['links']['next'] is None
+        assert body['offset'] == 0
+        assert body['limit'] == 7
+        assert body['size'] == 0
+        assert len(body['results']) == 0
+        spy.assert_called()
+        spy.assert_called_with(' '.join('''
+            select * from offers
+            where lower(position) like %s or lower(requirements) like %s or lower(description) like %s
+            order by date desc offset 0 limit 7
+        '''.split()), ('%position%', '%position%', '%position%'))
+
+@patch('offer_service.main.db', testDB)
+def test_search_offers_by_requirements():
+    with patch.object(testDB, 'execute', wraps=testDB.execute) as spy:        
+        res = client.get(f'{OFFERS_URL}?search=REQUIREMENTS')
+        assert res.status_code == 200
+        body = json.loads(res.text)
+        assert body['links']['prev'] is None
+        assert body['links']['next'] is None
+        assert body['offset'] == 0
+        assert body['limit'] == 7
+        assert body['size'] == 0
+        assert len(body['results']) == 0
+        spy.assert_called()
+        spy.assert_called_with(' '.join('''
+            select * from offers
+            where lower(position) like %s or lower(requirements) like %s or lower(description) like %s
+            order by date desc offset 0 limit 7
+        '''.split()), ('%requirements%', '%requirements%', '%requirements%'))
+
+@patch('offer_service.main.db', testDB)
+def test_search_offers_by_description():
+    with patch.object(testDB, 'execute', wraps=testDB.execute) as spy:        
+        res = client.get(f'{OFFERS_URL}?search=DESCRIPTION')
+        assert res.status_code == 200
+        body = json.loads(res.text)
+        assert body['links']['prev'] is None
+        assert body['links']['next'] is None
+        assert body['offset'] == 0
+        assert body['limit'] == 7
+        assert body['size'] == 0
+        assert len(body['results']) == 0
+        spy.assert_called()
+        spy.assert_called_with(' '.join('''
+            select * from offers
+            where lower(position) like %s or lower(requirements) like %s or lower(description) like %s
+            order by date desc offset 0 limit 7
+        '''.split()), ('%description%', '%description%', '%description%'))
+
+@patch('offer_service.main.db', testDB)
+def test_search_offer_by_agent_application_link():
+    with patch.object(testDB, 'execute', wraps=testDB.execute) as spy:        
+        res = client.get(f'{OFFERS_URL}?search=AGENT_APPLICATION_LINK')
+        assert res.status_code == 200
+        body = json.loads(res.text)
+        assert body['links']['prev'] is None
+        assert body['links']['next'] is None
+        assert body['offset'] == 0
+        assert body['limit'] == 7
+        assert body['size'] == 0
+        assert len(body['results']) == 0
+        spy.assert_called()
+        spy.assert_called_with(' '.join('''
+            select * from offers
+            where lower(position) like %s or lower(requirements) like %s or lower(description) like %s
+            order by date desc offset 0 limit 7
+        '''.split()), ('%agent_application_link%', '%agent_application_link%', '%agent_application_link%'))
