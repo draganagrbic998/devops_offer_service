@@ -216,3 +216,111 @@ def test_create_offer_valid():
     assert offers[0]['description'] == 'description 1'
     assert offers[0]['agent_application_link'] == 'agent_application_link 1'
 
+def test_read_offers():
+    reset_table(10)
+    res = requests.get(OFFERS_URL)
+    assert res.status_code == 200
+    body = json.loads(res.text)
+    assert body['links']['prev'] is None
+    assert body['links']['next'] == '/offers?search=&offset=7&limit=7'
+    assert body['offset'] == 0
+    assert body['limit'] == 7
+    assert body['size'] == 7
+    assert len(body['results']) == 7
+    for i in range(7):
+        assert body['results'][i]['position'] == f'position {10-i}'
+        assert body['results'][i]['requirements'] == f'requirements {10-i}'
+        assert body['results'][i]['description'] == f'description {10-i}'
+        assert body['results'][i]['agent_application_link'] == f'agent_application_link {10-i}'
+
+def test_read_offers_with_offset():
+    reset_table(10)
+    res = requests.get(f'{OFFERS_URL}?offset=7')
+    assert res.status_code == 200
+    body = json.loads(res.text)
+    assert body['links']['prev'] == '/offers?search=&offset=0&limit=7'
+    assert body['links']['next'] is None
+    assert body['offset'] == 7
+    assert body['limit'] == 7
+    assert body['size'] == 3
+    assert len(body['results']) == 3
+    
+def test_read_offers_with_limit():
+    reset_table(10)
+    res = requests.get(f'{OFFERS_URL}?limit=10')
+    assert res.status_code == 200
+    body = json.loads(res.text)
+    assert body['links']['prev'] is None
+    assert body['links']['next'] is None
+    assert body['offset'] == 0
+    assert body['limit'] == 10
+    assert body['size'] == 10
+    assert len(body['results']) == 10
+    for i in range(10):
+        assert body['results'][i]['position'] == f'position {10-i}'
+        assert body['results'][i]['requirements'] == f'requirements {10-i}'
+        assert body['results'][i]['description'] == f'description {10-i}'
+        assert body['results'][i]['agent_application_link'] == f'agent_application_link {10-i}'
+
+def test_search_offers_by_position():
+    reset_table(10)
+    res = requests.get(f'{OFFERS_URL}?search=POSITION')
+    assert res.status_code == 200
+    body = json.loads(res.text)
+    assert body['links']['prev'] is None
+    assert body['links']['next'] == '/offers?search=POSITION&offset=7&limit=7'
+    assert body['offset'] == 0
+    assert body['limit'] == 7
+    assert body['size'] == 7
+    assert len(body['results']) == 7
+    for i in range(7):
+        assert body['results'][i]['position'] == f'position {10-i}'
+        assert body['results'][i]['requirements'] == f'requirements {10-i}'
+        assert body['results'][i]['description'] == f'description {10-i}'
+        assert body['results'][i]['agent_application_link'] == f'agent_application_link {10-i}'
+
+def test_search_offers_by_requirements():
+    reset_table(10)
+    res = requests.get(f'{OFFERS_URL}?search=REQUIREMENTS')
+    assert res.status_code == 200
+    body = json.loads(res.text)
+    assert body['links']['prev'] is None
+    assert body['links']['next'] == '/offers?search=REQUIREMENTS&offset=7&limit=7'
+    assert body['offset'] == 0
+    assert body['limit'] == 7
+    assert body['size'] == 7
+    assert len(body['results']) == 7
+    for i in range(7):
+        assert body['results'][i]['position'] == f'position {10-i}'
+        assert body['results'][i]['requirements'] == f'requirements {10-i}'
+        assert body['results'][i]['description'] == f'description {10-i}'
+        assert body['results'][i]['agent_application_link'] == f'agent_application_link {10-i}'
+
+def test_search_offers_by_description():
+    reset_table(10)
+    res = requests.get(f'{OFFERS_URL}?search=DESCRIPTION')
+    assert res.status_code == 200
+    body = json.loads(res.text)
+    assert body['links']['prev'] is None
+    assert body['links']['next'] == '/offers?search=DESCRIPTION&offset=7&limit=7'
+    assert body['offset'] == 0
+    assert body['limit'] == 7
+    assert body['size'] == 7
+    assert len(body['results']) == 7
+    for i in range(7):
+        assert body['results'][i]['position'] == f'position {10-i}'
+        assert body['results'][i]['requirements'] == f'requirements {10-i}'
+        assert body['results'][i]['description'] == f'description {10-i}'
+        assert body['results'][i]['agent_application_link'] == f'agent_application_link {10-i}'
+
+def test_search_offer_by_agent_application_link():
+    reset_table(10)
+    res = requests.get(f'{OFFERS_URL}?search=AGENT_APPLICATION_LINK')
+    assert res.status_code == 200
+    body = json.loads(res.text)
+    assert body['links']['prev'] is None
+    assert body['links']['next'] is None
+    assert body['offset'] == 0
+    assert body['limit'] == 7
+    assert body['size'] == 0
+    assert len(body['results']) == 0
