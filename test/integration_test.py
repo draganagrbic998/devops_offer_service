@@ -1,9 +1,17 @@
 from sqlalchemy import create_engine
+
+import pytest
 import requests
+import time
 import json
 
 db = create_engine('postgresql://postgres:postgres@localhost:5435/postgres')
 OFFERS_URL = 'http://localhost:8002/api/offers'
+
+@pytest.fixture(scope='session', autouse=True)
+def do_something(request):
+    time.sleep(30)
+
 
 def test_create_offer_missing_position():
     data = {
@@ -187,13 +195,12 @@ def test_create_offer_empty_agent_application_link():
 
 
 def reset_table(number_of_rows=0):
-    with db.connect() as connection:
-        connection.execute('delete from offers')
-        for i in range(number_of_rows):
-            connection.execute(' '.join('''
-                insert into offers (date, position, requirements, description, agent_application_link)
-                values (current_timestamp, %s, %s, %s, %s)
-            '''.split()), (f'position {i+1}', f'requirements {i+1}', f'description {i+1}', f'agent_application_link {i+1}'))
+    db.execute('delete from offers')
+    for i in range(number_of_rows):
+        db.execute('''
+            insert into offers (position, requirements, description, agent_application_link)
+            values (%s, %s, %s, %s)
+        ''', (f'position {i+1}', f'requirements {i+1}', f'description {i+1}', f'agent_application_link {i+1}'))
 
 
 def test_create_offer_valid():
@@ -208,8 +215,7 @@ def test_create_offer_valid():
     assert res.status_code == 200
     body = json.loads(res.text)
     assert body is None
-    with db.connect() as connection:
-        offers = list(connection.execute('select * from offers'))
+    offers = list(db.execute('select * from offers'))
     assert len(offers) == 1
     assert offers[0]['position'] == 'position 1'
     assert offers[0]['requirements'] == 'requirements 1'

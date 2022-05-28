@@ -4,20 +4,20 @@ from mock import patch
 import json
 
 class TestDB:
-    
-    def connect(self):
-        return self
     def execute(self, sql, params):
         return []
-    def __enter__(self):
-        return self
-    def __exit__(self, exc_type, exc_value, tb):
-        pass
     
+class TestKP:
+    def send(self, topic, data):
+        pass
+
 client = TestClient(app)
 testDB = TestDB()
+testKP = TestKP()
 
-@patch('offer_service.main.db', testDB)
+def fix_whitespaces(text: str):
+    return ' '.join(text.split())
+
 def test_create_offer_missing_position():
     data = {
         'requirements': 'asd',
@@ -32,7 +32,6 @@ def test_create_offer_missing_position():
     assert body['detail'][0]['msg'] == 'field required'
     assert body['detail'][0]['type'] == 'value_error.missing'
 
-@patch('offer_service.main.db', testDB)
 def test_create_offer_null_position():
     data = {
         'position': None,
@@ -48,7 +47,6 @@ def test_create_offer_null_position():
     assert body['detail'][0]['msg'] == 'none is not an allowed value'
     assert body['detail'][0]['type'] == 'type_error.none.not_allowed'
 
-@patch('offer_service.main.db', testDB)
 def test_create_offer_empty_position():
     data = {
         'position': '',
@@ -65,7 +63,6 @@ def test_create_offer_empty_position():
     assert body['detail'][0]['type'] == 'value_error.any_str.min_length'
     assert body['detail'][0]['ctx']['limit_value'] == 1
 
-@patch('offer_service.main.db', testDB)
 def test_create_offer_missing_requirements():
     data = {
         'position': 'asd',
@@ -80,7 +77,6 @@ def test_create_offer_missing_requirements():
     assert body['detail'][0]['msg'] == 'field required'
     assert body['detail'][0]['type'] == 'value_error.missing'
 
-@patch('offer_service.main.db', testDB)
 def test_create_offer_null_requirements():
     data = {
         'position': 'asd',
@@ -96,7 +92,6 @@ def test_create_offer_null_requirements():
     assert body['detail'][0]['msg'] == 'none is not an allowed value'
     assert body['detail'][0]['type'] == 'type_error.none.not_allowed'
 
-@patch('offer_service.main.db', testDB)
 def test_create_offer_empty_requirements():
     data = {
         'position': 'asd',
@@ -113,7 +108,6 @@ def test_create_offer_empty_requirements():
     assert body['detail'][0]['type'] == 'value_error.any_str.min_length'
     assert body['detail'][0]['ctx']['limit_value'] == 1
 
-@patch('offer_service.main.db', testDB)
 def test_create_offer_missing_description():
     data = {
         'position': 'asd',
@@ -128,7 +122,6 @@ def test_create_offer_missing_description():
     assert body['detail'][0]['msg'] == 'field required'
     assert body['detail'][0]['type'] == 'value_error.missing'
 
-@patch('offer_service.main.db', testDB)
 def test_create_offer_null_description():
     data = {
         'position': 'asd',
@@ -144,7 +137,6 @@ def test_create_offer_null_description():
     assert body['detail'][0]['msg'] == 'none is not an allowed value'
     assert body['detail'][0]['type'] == 'type_error.none.not_allowed'
 
-@patch('offer_service.main.db', testDB)
 def test_create_offer_empty_description():
     data = {
         'position': 'asd',
@@ -161,7 +153,6 @@ def test_create_offer_empty_description():
     assert body['detail'][0]['type'] == 'value_error.any_str.min_length'
     assert body['detail'][0]['ctx']['limit_value'] == 1
 
-@patch('offer_service.main.db', testDB)
 def test_create_offer_missing_agent_application_link():
     data = {
         'position': 'asd',
@@ -176,7 +167,6 @@ def test_create_offer_missing_agent_application_link():
     assert body['detail'][0]['msg'] == 'field required'
     assert body['detail'][0]['type'] == 'value_error.missing'
 
-@patch('offer_service.main.db', testDB)
 def test_create_offer_null_agent_application_link():
     data = {
         'position': 'asd',
@@ -192,7 +182,6 @@ def test_create_offer_null_agent_application_link():
     assert body['detail'][0]['msg'] == 'none is not an allowed value'
     assert body['detail'][0]['type'] == 'type_error.none.not_allowed'
 
-@patch('offer_service.main.db', testDB)
 def test_create_offer_empty_agent_application_link():
     data = {
         'position': 'asd',
@@ -210,6 +199,7 @@ def test_create_offer_empty_agent_application_link():
     assert body['detail'][0]['ctx']['limit_value'] == 1
 
 @patch('offer_service.main.db', testDB)
+@patch('offer_service.main.kafka_producer', testKP)
 def test_create_offer_valid():
     with patch.object(testDB, 'execute', wraps=testDB.execute) as spy:        
         data = {
@@ -223,10 +213,7 @@ def test_create_offer_valid():
         body = json.loads(res.text)
         assert body is None
         spy.assert_called_once()
-        spy.assert_called_once_with(' '.join('''
-            insert into offers (date, position, requirements, description, agent_application_link)
-            values (current_timestamp, %s, %s, %s, %s)
-        '''.split()), ('position 1', 'requirements 1', 'description 1', 'agent_application_link 1'))
+        spy.assert_called_once_with('insert into offers (position, requirements, description, agent_application_link) values (%s, %s, %s, %s)', ('position 1', 'requirements 1', 'description 1', 'agent_application_link 1'))
 
 @patch('offer_service.main.db', testDB)
 def test_read_offers():
@@ -241,11 +228,11 @@ def test_read_offers():
         assert body['size'] == 0
         assert len(body['results']) == 0
         spy.assert_called()
-        spy.assert_called_with(' '.join('''
+        spy.assert_called_with(fix_whitespaces('''
             select * from offers
             where lower(position) like %s or lower(requirements) like %s or lower(description) like %s
-            order by date desc offset 0 limit 7
-        '''.split()), ('%%', '%%', '%%'))
+            order by id desc offset 0 limit 7
+        '''), ('%%', '%%', '%%'))
 
 @patch('offer_service.main.db', testDB)
 def test_read_offers_with_offset():
@@ -260,11 +247,11 @@ def test_read_offers_with_offset():
         assert body['size'] == 0
         assert len(body['results']) == 0
         spy.assert_called()
-        spy.assert_called_with(' '.join('''
+        spy.assert_called_with(fix_whitespaces('''
             select * from offers
             where lower(position) like %s or lower(requirements) like %s or lower(description) like %s
-            order by date desc offset 7 limit 7
-        '''.split()), ('%%', '%%', '%%'))
+            order by id desc offset 7 limit 7
+        '''), ('%%', '%%', '%%'))
 
 @patch('offer_service.main.db', testDB)
 def test_read_offers_with_limit():
@@ -279,11 +266,11 @@ def test_read_offers_with_limit():
         assert body['size'] == 0
         assert len(body['results']) == 0
         spy.assert_called()
-        spy.assert_called_with(' '.join('''
+        spy.assert_called_with(fix_whitespaces('''
             select * from offers
             where lower(position) like %s or lower(requirements) like %s or lower(description) like %s
-            order by date desc offset 0 limit 10
-        '''.split()), ('%%', '%%', '%%'))
+            order by id desc offset 0 limit 10
+        '''), ('%%', '%%', '%%'))
 
 @patch('offer_service.main.db', testDB)
 def test_search_offers_by_position():
@@ -298,11 +285,11 @@ def test_search_offers_by_position():
         assert body['size'] == 0
         assert len(body['results']) == 0
         spy.assert_called()
-        spy.assert_called_with(' '.join('''
+        spy.assert_called_with(fix_whitespaces('''
             select * from offers
             where lower(position) like %s or lower(requirements) like %s or lower(description) like %s
-            order by date desc offset 0 limit 7
-        '''.split()), ('%position%', '%position%', '%position%'))
+            order by id desc offset 0 limit 7
+        '''), ('%position%', '%position%', '%position%'))
 
 @patch('offer_service.main.db', testDB)
 def test_search_offers_by_requirements():
@@ -317,11 +304,11 @@ def test_search_offers_by_requirements():
         assert body['size'] == 0
         assert len(body['results']) == 0
         spy.assert_called()
-        spy.assert_called_with(' '.join('''
+        spy.assert_called_with(fix_whitespaces('''
             select * from offers
             where lower(position) like %s or lower(requirements) like %s or lower(description) like %s
-            order by date desc offset 0 limit 7
-        '''.split()), ('%requirements%', '%requirements%', '%requirements%'))
+            order by id desc offset 0 limit 7
+        '''), ('%requirements%', '%requirements%', '%requirements%'))
 
 @patch('offer_service.main.db', testDB)
 def test_search_offers_by_description():
@@ -336,11 +323,11 @@ def test_search_offers_by_description():
         assert body['size'] == 0
         assert len(body['results']) == 0
         spy.assert_called()
-        spy.assert_called_with(' '.join('''
+        spy.assert_called_with(fix_whitespaces('''
             select * from offers
             where lower(position) like %s or lower(requirements) like %s or lower(description) like %s
-            order by date desc offset 0 limit 7
-        '''.split()), ('%description%', '%description%', '%description%'))
+            order by id desc offset 0 limit 7
+        '''), ('%description%', '%description%', '%description%'))
 
 @patch('offer_service.main.db', testDB)
 def test_search_offer_by_agent_application_link():
@@ -355,8 +342,8 @@ def test_search_offer_by_agent_application_link():
         assert body['size'] == 0
         assert len(body['results']) == 0
         spy.assert_called()
-        spy.assert_called_with(' '.join('''
+        spy.assert_called_with(fix_whitespaces('''
             select * from offers
             where lower(position) like %s or lower(requirements) like %s or lower(description) like %s
-            order by date desc offset 0 limit 7
-        '''.split()), ('%agent_application_link%', '%agent_application_link%', '%agent_application_link%'))
+            order by id desc offset 0 limit 7
+        '''), ('%agent_application_link%', '%agent_application_link%', '%agent_application_link%'))
