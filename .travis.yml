@@ -53,6 +53,8 @@ jobs:
         sonarcloud:
           organization: draganagrbic998
           token: $SONARCLOUD_TOKEN
+      language: node_js
+      node_js: 16
       install: skip
       script:
         - sonar-scanner -Dsonar.projectKey=draganagrbic998_devops_offer_service
