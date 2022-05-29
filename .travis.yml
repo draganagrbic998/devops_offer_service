@@ -53,10 +53,12 @@ jobs:
         sonarcloud:
           organization: draganagrbic998
           token: $SONARCLOUD_TOKEN
+      language: node_js
+      node_js: 16
       install: skip
       script:
         - sonar-scanner -Dsonar.projectKey=draganagrbic998_devops_offer_service
-      if: (branch = master and type != pull_request) OR (branch = develop and type != pull_request)
+      if: type = pull_request
     - stage: artifact_deploy
       install: skip
       before_script:
