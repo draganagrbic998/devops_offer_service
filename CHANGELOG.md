@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v1.5.0 (2022-05-29)
+### Feature
+* Monitoring feature ([#5](https://github.com/draganagrbic998/devops_offer_service/issues/5)) ([`3fecadb`](https://github.com/draganagrbic998/devops_offer_service/commit/3fecadbbbaffe84b29d4904b60af8df514de5145))
+
 ## v1.4.0 (2022-05-29)
 ### Feature
 * Events, tracing and logging feature ([#3](https://github.com/draganagrbic998/devops_offer_service/issues/3)) ([`dd301ca`](https://github.com/draganagrbic998/devops_offer_service/commit/dd301ca16aae87dbd311dcc8b78c33213962427d))
