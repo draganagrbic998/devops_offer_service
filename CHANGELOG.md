@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v1.5.1 (2022-05-30)
+### Fix
+* Fix env variables ([#6](https://github.com/draganagrbic998/devops_offer_service/issues/6)) ([`6247e00`](https://github.com/draganagrbic998/devops_offer_service/commit/6247e00af0dc7852834404150beea469c5f60930))
+
 ## v1.5.0 (2022-05-29)
 ### Feature
 * Monitoring feature ([#5](https://github.com/draganagrbic998/devops_offer_service/issues/5)) ([`3fecadb`](https://github.com/draganagrbic998/devops_offer_service/commit/3fecadbbbaffe84b29d4904b60af8df514de5145))
