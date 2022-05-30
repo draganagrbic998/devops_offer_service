@@ -14,10 +14,20 @@ from prometheus_fastapi_instrumentator.metrics import Info
 import uvicorn
 import time
 import json
+import os
 
+DB_USERNAME = os.getenv('DB_USERNAME', 'postgres')
+DB_PASSWORD = os.getenv('DB_PASSWORD', 'postgres')
+DB_HOST = os.getenv('DB_HOST', 'offer_service_db')
+DB_PORT = os.getenv('DB_PORT', '5432')
+DB_NAME = os.getenv('DB_NAME', 'postgres')
+KAFKA_HOST = os.getenv('KAFKA_HOST', 'kafka')
+KAFKA_PORT = os.getenv('KAFKA_PORT', '9092')
+KAFKA_EVENTS_TOPIC = os.getenv('KAFKA_EVENTS_TOPIC', 'events')
+OFFERS_URL = '/api/offers'
 
 app = FastAPI(title='Offer Service API')
-db = create_engine('postgresql://postgres:postgres@offer_service_db:5432/postgres')
+db = create_engine(f'postgresql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}')
 kafka_producer = None
 
 app.add_middleware(
@@ -88,9 +98,6 @@ instrumentator.add(http_404_requests())
 instrumentator.add(http_unique_users())
 instrumentator.instrument(app).expose(app)
 
-OFFERS_URL = '/api/offers'
-
-
 class Offer(BaseModel):
     id: Optional[int] = Field(description='Offer ID')
     position: str = Field(description='Offer Position', min_length=1)
@@ -116,7 +123,7 @@ def register_kafka_producer():
     global kafka_producer
     while True:
         try:
-            kafka_producer = KafkaProducer(bootstrap_servers='kafka:9092', value_serializer=lambda v: json.dumps(v).encode('utf-8'))
+            kafka_producer = KafkaProducer(bootstrap_servers=f'{KAFKA_HOST}:{KAFKA_PORT}', value_serializer=lambda v: json.dumps(v).encode('utf-8'))
             break
         except:
             time.sleep(3)   
@@ -127,7 +134,7 @@ def record_action(status: int, message: str, span):
     span.set_tag('message', message)
 
 def record_event(type: str, data: dict):
-    kafka_producer.send('events', {
+    kafka_producer.send(KAFKA_EVENTS_TOPIC, {
         'type': type,
         'data': data
     })
