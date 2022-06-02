@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v1.5.2 (2022-06-02)
+### Fix
+* Remove unused cors config ([#7](https://github.com/draganagrbic998/devops_offer_service/issues/7)) ([`5312e34`](https://github.com/draganagrbic998/devops_offer_service/commit/5312e3472f437b29fd2517e3b3a3fa6d0ae32bfd))
+
 ## v1.5.1 (2022-05-30)
 ### Fix
 * Fix env variables ([#6](https://github.com/draganagrbic998/devops_offer_service/issues/6)) ([`6247e00`](https://github.com/draganagrbic998/devops_offer_service/commit/6247e00af0dc7852834404150beea469c5f60930))
